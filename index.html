@@ -6,10 +6,10 @@
   <link rel="manifest" href="manifest.json">
   <meta name="theme-color" content="#317EFB"/>
   <style>
-    body { font-family: Arial, sans-serif; padding: 10px; }
+    body { font-family: Arial, sans-serif; padding: 10px; margin: 0; }
     table { border-collapse: collapse; width: 100%; overflow-x: auto; display: block; margin-bottom: 30px; }
     th, td { border: 1px solid #ccc; padding: 6px; text-align: center; font-size: 14px; }
-    th { background: #f0f0f0; }
+    th { background: #f0f0f0; position: sticky; top: 0; z-index: 2; }
     input[type="number"], input[type="text"] { width: 50px; font-size: 14px; }
     label input { width: auto; margin: 2px; font-size: 14px; }
     .player-labels { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 15px; }
@@ -17,7 +17,7 @@
     .player-labels input { width: 100%; box-sizing: border-box; }
     button { margin: 10px 5px 10px 0; padding: 10px; font-size: 14px; }
     .match-container { margin-bottom: 40px; border: 1px solid #ccc; padding: 10px; border-radius: 6px; }
-    .match-nav { display: flex; flex-wrap: wrap; gap: 5px; margin: 10px 0; }
+    .match-nav { display: flex; flex-wrap: wrap; gap: 5px; margin: 10px 0; position: sticky; top: 0; background: #fff; z-index: 1; padding: 10px 0; }
     .match-nav button { flex: 1 1 auto; }
     @media (min-width: 500px) {
       .player-labels div { flex: 1 1 45%; }
@@ -43,17 +43,7 @@
     <thead>
       <tr><th>Hole</th><th>Your Score</th></tr>
     </thead>
-    <tbody>
-      <script>
-        const parValues = [4,5,3,4,4,4,4,3,5,4,5,4,4,3,5,3,4,4];
-        for (let i = 1; i <= 18; i++) {
-          document.write(`<tr>
-            <td>${i}</td>
-            <td><input type="number" min="1" id="your_${i}"></td>
-          </tr>`);
-        }
-      </script>
-    </tbody>
+    <tbody id="yourScorecard"></tbody>
   </table>
 
   <button onclick="addMatch()">Add New Match</button>
@@ -61,6 +51,25 @@
   <div id="matches"></div>
 
   <script>
+    const parValues = [4,5,3,4,4,4,4,3,5,4,5,4,4,3,5,3,4,4];
+    const yourScorecard = document.getElementById("yourScorecard");
+    for (let i = 1; i <= 18; i++) {
+      const row = document.createElement("tr");
+      row.id = `row_hole_${i}`;
+      row.innerHTML = `<td>Hole ${i}</td><td><input type="number" min="1" id="your_${i}" onchange="autoScrollToNext(${i})"></td>`;
+      yourScorecard.appendChild(row);
+    }
+
+    function autoScrollToNext(currentHole) {
+      if (currentHole < 18) {
+        const nextInput = document.getElementById(`your_${currentHole + 1}`);
+        if (nextInput) {
+          nextInput.scrollIntoView({ behavior: "smooth", block: "center" });
+          nextInput.focus();
+        }
+      }
+    }
+
     let matchCount = 0;
 
     function addMatch() {
@@ -82,9 +91,9 @@
       container.innerHTML = `
         <h3>Match ${matchCount}</h3>
         <div class="player-labels">
-          <div><label>Partner: <input id="${matchId}_partner" placeholder="Partner"></label></div>
-          <div><label>Opponent 1: <input id="${matchId}_opp1" placeholder="Opponent 1"></label></div>
-          <div><label>Opponent 2: <input id="${matchId}_opp2" placeholder="Opponent 2"></label></div>
+          <div><label>Partner Name: <input id="${matchId}_partner" placeholder="Partner"></label></div>
+          <div><label>Opponent 1 Name: <input id="${matchId}_opp1" placeholder="Opponent 1"></label></div>
+          <div><label>Opponent 2 Name: <input id="${matchId}_opp2" placeholder="Opponent 2"></label></div>
         </div>
         <table>
           <thead>
@@ -93,7 +102,7 @@
           <tbody>
             ${[...Array(18)].map((_, i) => `
               <tr>
-                <td>${i+1}</td>
+                <td>Hole ${i+1}</td>
                 <td>${parValues[i]}</td>
                 <td id="${matchId}_your_${i+1}">-</td>
                 <td><input type="number" min="1" id="${matchId}_partner_${i+1}" onchange="calcMatch('${matchId}', ${i+1})"></td>
