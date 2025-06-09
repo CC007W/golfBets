@@ -15,8 +15,10 @@
     .player-labels { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 15px; }
     .player-labels div { flex: 1 1 100%; max-width: 100%; }
     .player-labels input { width: 100%; box-sizing: border-box; }
-    button { margin: 10px 0; padding: 10px; font-size: 14px; }
+    button { margin: 10px 5px 10px 0; padding: 10px; font-size: 14px; }
     .match-container { margin-bottom: 40px; border: 1px solid #ccc; padding: 10px; border-radius: 6px; }
+    .match-nav { display: flex; flex-wrap: wrap; gap: 5px; margin: 10px 0; }
+    .match-nav button { flex: 1 1 auto; }
     @media (min-width: 500px) {
       .player-labels div { flex: 1 1 45%; }
     }
@@ -55,6 +57,7 @@
   </table>
 
   <button onclick="addMatch()">Add New Match</button>
+  <div class="match-nav" id="matchNav"></div>
   <div id="matches"></div>
 
   <script>
@@ -63,8 +66,19 @@
     function addMatch() {
       matchCount++;
       const matchId = `match_${matchCount}`;
+
+      const navButton = document.createElement('button');
+      navButton.textContent = `Match ${matchCount}`;
+      navButton.onclick = () => {
+        document.querySelectorAll('.match-container').forEach(el => el.style.display = 'none');
+        document.getElementById(matchId).style.display = 'block';
+      };
+      document.getElementById('matchNav').appendChild(navButton);
+
       const container = document.createElement('div');
       container.className = 'match-container';
+      container.id = matchId;
+      container.style.display = matchCount === 1 ? 'block' : 'none';
       container.innerHTML = `
         <h3>Match ${matchCount}</h3>
         <div class="player-labels">
