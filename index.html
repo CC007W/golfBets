@@ -34,6 +34,16 @@
         white-space: nowrap;
         font-weight: bold;
       }
+      td:nth-of-type(1)::before { content: "Hole"; }
+      td:nth-of-type(2)::before { content: "Par"; }
+      td:nth-of-type(3)::before { content: "Your"; }
+      td:nth-of-type(4)::before { content: "Partner"; }
+      td:nth-of-type(5)::before { content: "Team"; }
+      td:nth-of-type(6)::before { content: "Birdie"; }
+      td:nth-of-type(7)::before { content: "Opp1"; }
+      td:nth-of-type(8)::before { content: "Opp2"; }
+      td:nth-of-type(9)::before { content: "Opp Team"; }
+      td:nth-of-type(10)::before { content: "Birdie"; }
     }
   </style>
 </head>
@@ -56,8 +66,15 @@
     for (let i = 1; i <= 18; i++) {
       const row = document.createElement("tr");
       row.id = `row_hole_${i}`;
-      row.innerHTML = `<td>Hole ${i}</td><td><input type="number" min="1" id="your_${i}" onchange="autoScrollToNext(${i})"></td>`;
+      row.innerHTML = `<td>Hole ${i}</td><td><input type="number" min="1" id="your_${i}" onchange="handleYourScoreChange(${i})"></td>`;
       yourScorecard.appendChild(row);
+    }
+
+    function handleYourScoreChange(hole) {
+      autoScrollToNext(hole);
+      for (let m = 1; m <= matchCount; m++) {
+        calcMatch(`match_${m}`, hole);
+      }
     }
 
     function autoScrollToNext(currentHole) {
@@ -91,6 +108,7 @@
       container.innerHTML = `
         <h3>Match ${matchCount}</h3>
         <div class="player-labels">
+          <div><label>Your Name: <input id="${matchId}_yourname" placeholder="Your Name"></label></div>
           <div><label>Partner Name: <input id="${matchId}_partner" placeholder="Partner"></label></div>
           <div><label>Opponent 1 Name: <input id="${matchId}_opp1" placeholder="Opponent 1"></label></div>
           <div><label>Opponent 2 Name: <input id="${matchId}_opp2" placeholder="Opponent 2"></label></div>
