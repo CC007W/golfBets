@@ -3,6 +3,8 @@
 <head>
   <title>2-Man Team Golf Scorecard</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#317EFB"/>
   <style>
     body { font-family: Arial, sans-serif; padding: 10px; }
     table { border-collapse: collapse; width: 100%; overflow-x: auto; display: block; }
@@ -10,6 +12,12 @@
     th { background: #f0f0f0; }
     input[type="number"], input[type="text"] { width: 50px; font-size: 14px; }
     label input { width: auto; margin: 2px; font-size: 14px; }
+    .player-labels { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 15px; }
+    .player-labels div { flex: 1 1 100%; max-width: 100%; }
+    .player-labels input { width: 100%; box-sizing: border-box; }
+    @media (min-width: 500px) {
+      .player-labels div { flex: 1 1 45%; }
+    }
     @media (max-width: 768px) {
       table, thead, tbody, th, td, tr { display: block; }
       thead tr { display: none; }
@@ -27,9 +35,13 @@
 </head>
 <body>
   <h2>2-Man Team Golf Scorecard</h2>
-  <label>Team A: <input id="teamA1" placeholder="Player A1"> + <input id="teamA2" placeholder="Player A2"></label><br><br>
-  <label>Team B: <input id="teamB1" placeholder="Player B1"> + <input id="teamB2" placeholder="Player B2"></label>
-  <br><br>
+  <div class="player-labels">
+    <div><label>Player A1: <input id="teamA1" placeholder="Player A1"></label></div>
+    <div><label>Player A2: <input id="teamA2" placeholder="Player A2"></label></div>
+    <div><label>Player B1: <input id="teamB1" placeholder="Player B1"></label></div>
+    <div><label>Player B2: <input id="teamB2" placeholder="Player B2"></label></div>
+  </div>
+
   <table id="scoreTable">
     <thead>
       <tr>
@@ -46,7 +58,6 @@
       </tr>
     </thead>
     <tbody>
-      <!-- Generate 18 holes -->
       <script>
         const parValues = [4,5,3,4,4,4,4,3,5,4,5,4,4,3,5,3,4,4];
         for (let i = 1; i <= 18; i++) {
@@ -117,6 +128,14 @@
       document.getElementById("totalB").innerText = totalB;
       document.getElementById("totalBirdiesA").innerText = birdiesA;
       document.getElementById("totalBirdiesB").innerText = birdiesB;
+    }
+
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('sw.js')
+          .then(reg => console.log('Service worker registered.', reg))
+          .catch(err => console.error('Service worker registration failed:', err));
+      });
     }
   </script>
 </body>
