@@ -37,4 +37,215 @@
     .match-container td:nth-of-type(6)::before { content: "Birdie"; }
     .match-container td:nth-of-type(7)::before { content: "Opp1"; }
     .match-container td:nth-of-type(8)::before { content: "Opp2"; }
-    .match-container td:nth-of-type(9)::before { content: "Op
+    .match-container td:nth-of-type(9)::before { content: "Opp Team Best"; }
+    .match-container td:nth-of-type(10)::before { content: "Birdie"; }
+
+    /* Labels for personal scorecard */
+    #yourScorecard td:nth-of-type(1)::before { content: "Hole & Par"; }
+    #yourScorecard td:nth-of-type(2)::before { content: "Your Score"; }
+  }
+</style>
+</head>
+<body>
+
+<h2>Your Personal Scorecard</h2>
+<table id="yourScorecard" aria-label="Personal scorecard">
+  <thead>
+    <tr><th>Hole & Par</th><th>Your Score</th></tr>
+  </thead>
+  <tbody>
+    <!-- JS will generate rows -->
+  </tbody>
+</table>
+
+<button id="addMatchBtn">Add New Match</button>
+<div class="match-nav" id="matchNav"></div>
+<div id="matches"></div>
+
+<script>
+  const parValues = [4,5,3,4,4,4,4,3,5,4,5,4,4,3,5,3,4,4];
+  const yourScorecardBody = document.querySelector("#yourScorecard tbody");
+  let matchCount = 0;
+
+  // Generate your personal scorecard rows with input boxes
+  function generateYourScorecard() {
+    yourScorecardBody.innerHTML = "";
+    for(let i=1; i<=18; i++) {
+      const row = document.createElement("tr");
+      row.innerHTML = `
+        <td>Hole ${i} Par ${parValues[i-1]}</td>
+        <td><input type="number" min="1" id="your_${i}" onchange="onYourScoreChange(${i})" /></td>
+      `;
+      yourScorecardBody.appendChild(row);
+    }
+  }
+
+  // Called when your personal score input changes
+  function onYourScoreChange(hole) {
+    // Auto scroll next hole input (optional)
+    if (hole < 18) {
+      const nextInput = document.getElementById(`your_${hole + 1}`);
+      if (nextInput) {
+        nextInput.focus();
+        nextInput.scrollIntoView({behavior: 'smooth', block: 'center'});
+      }
+    }
+    updateMatchesWithYourScores();
+  }
+
+  // Add a new match container with inputs
+  function addMatch() {
+    matchCount++;
+    const matchId = `match_${matchCount}`;
+
+    // Create nav button
+    const navBtn = document.createElement("button");
+    navBtn.textContent = `Match ${matchCount}`;
+    navBtn.addEventListener("click", () => {
+      // Hide all matches, show this one
+      document.querySelectorAll(".match-container").forEach(c => c.style.display = "none");
+      document.getElementById(matchId).style.display = "block";
+    });
+    document.getElementById("matchNav").appendChild(navBtn);
+
+    // Create match container
+    const container = document.createElement("div");
+    container.className = "match-container";
+    container.id = matchId;
+    if(matchCount > 1) container.style.display = "none";
+
+    container.innerHTML = `
+      <h3>Match ${matchCount}</h3>
+      <div class="player-names">
+        <div><label>Your Name: <input id="${matchId}_yourname" placeholder="Your Name" /></label></div>
+        <div><label>Partner Name: <input id="${matchId}_partnername" placeholder="Partner Name" /></label></div>
+        <div><label>Opponent 1: <input id="${matchId}_opp1name" placeholder="Opponent 1" /></label></div>
+        <div><label>Opponent 2: <input id="${matchId}_opp2name" placeholder="Opponent 2" /></label></div>
+      </div>
+      <table aria-label="Match ${matchCount} scorecard">
+        <thead>
+          <tr>
+            <th>Hole</th><th>Par</th><th>You</th><th>Partner</th><th>Team Best</th><th>Birdie</th><th>Opp1</th><th>Opp2</th><th>Opp Team Best</th><th>Birdie</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${[...Array(18)].map((_, i) => `
+            <tr>
+              <td>${i+1}</td>
+              <td>${parValues[i]}</td>
+              <td><input type="number" min="1" id="${matchId}_your_${i+1}" onchange="calculateMatch('${matchId}',${i+1})" /></td>
+              <td><input type="number" min="1" id="${matchId}_partner_${i+1}" onchange="calculateMatch('${matchId}',${i+1})" /></td>
+              <td id="${matchId}_team_${i+1}">-</td>
+              <td id="${matchId}_birdieA_${i+1}">-</td>
+              <td><input type="number" min="1" id="${matchId}_opp1_${i+1}" onchange="calculateMatch('${matchId}',${i+1})" /></td>
+              <td><input type="number" min="1" id="${matchId}_opp2_${i+1}" onchange="calculateMatch('${matchId}',${i+1})" /></td>
+              <td id="${matchId}_oppTeam_${i+1}">-</td>
+              <td id="${matchId}_birdieB_${i+1}">-</td>
+            </tr>
+          `).join('')}
+        </tbody>
+        <tfoot>
+          <tr>
+            <th>Total</th><td></td><td></td><td></td>
+            <th id="${matchId}_totalA">0</th><th id="${matchId}_birdiesA">0</th>
+            <td></td><td></td>
+            <th id="${matchId}_totalB">0</th><th id="${matchId}_birdiesB">0</th>
+          </tr>
+        </tfoot>
+      </table>
+    `;
+
+    document.getElementById("matches").appendChild(container);
+
+    // Sync your personal scores to this match "You" inputs
+    syncYourScoresToMatch(matchId);
+  }
+
+  // Update "You" inputs in all matches when your personal scorecard changes
+  function updateMatchesWithYourScores() {
+    for(let i=1; i<=matchCount; i++) {
+      syncYourScoresToMatch(`match_${i}`);
+      recalcMatch(`match_${i}`);
+    }
+  }
+
+  // Sync your personal scores to match inputs for "You" player
+  function syncYourScoresToMatch(matchId) {
+    for(let hole=1; hole<=18; hole++) {
+      const yourScoreInput = document.getElementById(`your_${hole}`);
+      const yourScore = parseInt(yourScoreInput.value);
+      const matchYourInput = document.getElementById(`${matchId}_your_${hole}`);
+      if(!isNaN(yourScore)) {
+        matchYourInput.value = yourScore;
+      } else {
+        matchYourInput.value = "";
+      }
+    }
+  }
+
+  // Calculate best ball, birdies, totals for a match
+  function calculateMatch(matchId, hole) {
+    recalcMatch(matchId);
+  }
+
+  function recalcMatch(matchId) {
+    let totalA = 0, totalB = 0, birdiesA = 0, birdiesB = 0;
+
+    for(let hole=1; hole<=18; hole++) {
+      const par = parValues[hole-1];
+      const yourVal = parseInt(document.getElementById(`${matchId}_your_${hole}`).value);
+      const partnerVal = parseInt(document.getElementById(`${matchId}_partner_${hole}`).value);
+      const opp1Val = parseInt(document.getElementById(`${matchId}_opp1_${hole}`).value);
+      const opp2Val = parseInt(document.getElementById(`${matchId}_opp2_${hole}`).value);
+
+      // Calculate team best ball (you + partner)
+      let teamBest = Math.min(
+        isNaN(yourVal) ? Infinity : yourVal,
+        isNaN(partnerVal) ? Infinity : partnerVal
+      );
+      if(teamBest === Infinity) teamBest = '-';
+      document.getElementById(`${matchId}_team_${hole}`).innerText = teamBest;
+
+      // Birdie for team?
+      const birdieA = (teamBest !== '-' && teamBest < par) ? '✔️' : '-';
+      document.getElementById(`${matchId}_birdieA_${hole}`).innerText = birdieA;
+
+      // Opponent team best ball
+      let oppTeamBest = Math.min(
+        isNaN(opp1Val) ? Infinity : opp1Val,
+        isNaN(opp2Val) ? Infinity : opp2Val
+      );
+      if(oppTeamBest === Infinity) oppTeamBest = '-';
+      document.getElementById(`${matchId}_oppTeam_${hole}`).innerText = oppTeamBest;
+
+      // Birdie for opponent team?
+      const birdieB = (oppTeamBest !== '-' && oppTeamBest < par) ? '✔️' : '-';
+      document.getElementById(`${matchId}_birdieB_${hole}`).innerText = birdieB;
+
+      if(teamBest !== '-') {
+        totalA += teamBest;
+        if(teamBest < par) birdiesA++;
+      }
+      if(oppTeamBest !== '-') {
+        totalB += oppTeamBest;
+        if(oppTeamBest < par) birdiesB++;
+      }
+    }
+
+    document.getElementById(`${matchId}_totalA`).innerText = totalA;
+    document.getElementById(`${matchId}_birdiesA`).innerText = birdiesA;
+    document.getElementById(`${matchId}_totalB`).innerText = totalB;
+    document.getElementById(`${matchId}_birdiesB`).innerText = birdiesB;
+  }
+
+  function recalcAll(matchId) {
+    recalcMatch(matchId);
+  }
+
+  // Initialize
+  generateYourScorecard();
+  document.getElementById("addMatchBtn").addEventListener("click", addMatch);
+
+</script>
+</body>
+</html>
