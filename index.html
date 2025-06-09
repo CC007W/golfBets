@@ -7,7 +7,7 @@
   <meta name="theme-color" content="#317EFB"/>
   <style>
     body { font-family: Arial, sans-serif; padding: 10px; }
-    table { border-collapse: collapse; width: 100%; overflow-x: auto; display: block; }
+    table { border-collapse: collapse; width: 100%; overflow-x: auto; display: block; margin-bottom: 30px; }
     th, td { border: 1px solid #ccc; padding: 6px; text-align: center; font-size: 14px; }
     th { background: #f0f0f0; }
     input[type="number"], input[type="text"] { width: 50px; font-size: 14px; }
@@ -15,6 +15,8 @@
     .player-labels { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 15px; }
     .player-labels div { flex: 1 1 100%; max-width: 100%; }
     .player-labels input { width: 100%; box-sizing: border-box; }
+    button { margin: 10px 0; padding: 10px; font-size: 14px; }
+    .match-container { margin-bottom: 40px; border: 1px solid #ccc; padding: 10px; border-radius: 6px; }
     @media (min-width: 500px) {
       .player-labels div { flex: 1 1 45%; }
     }
@@ -30,42 +32,14 @@
         white-space: nowrap;
         font-weight: bold;
       }
-      td:nth-child(1)::before { content: "Hole"; }
-      td:nth-child(2)::before { content: "Par"; }
-      td:nth-child(3)::before { content: "Player A1"; }
-      td:nth-child(4)::before { content: "Player A2"; }
-      td:nth-child(5)::before { content: "Best Ball (Team A)"; }
-      td:nth-child(6)::before { content: "Birdie (A)"; }
-      td:nth-child(7)::before { content: "Player B1"; }
-      td:nth-child(8)::before { content: "Player B2"; }
-      td:nth-child(9)::before { content: "Best Ball (Team B)"; }
-      td:nth-child(10)::before { content: "Birdie (B)"; }
     }
   </style>
 </head>
 <body>
-  <h2>2-Man Team Golf Scorecard</h2>
-  <div class="player-labels">
-    <div><label>Player A1: <input id="teamA1" placeholder="Player A1"></label></div>
-    <div><label>Player A2: <input id="teamA2" placeholder="Player A2"></label></div>
-    <div><label>Player B1: <input id="teamB1" placeholder="Player B1"></label></div>
-    <div><label>Player B2: <input id="teamB2" placeholder="Player B2"></label></div>
-  </div>
-
-  <table id="scoreTable">
+  <h2>Your Scorecard</h2>
+  <table>
     <thead>
-      <tr>
-        <th>Hole</th>
-        <th>Par</th>
-        <th>Player A1</th>
-        <th>Player A2</th>
-        <th>Best Ball (Team A)</th>
-        <th>Birdie (A)</th>
-        <th>Player B1</th>
-        <th>Player B2</th>
-        <th>Best Ball (Team B)</th>
-        <th>Birdie (B)</th>
-      </tr>
+      <tr><th>Hole</th><th>Your Score</th></tr>
     </thead>
     <tbody>
       <script>
@@ -73,71 +47,98 @@
         for (let i = 1; i <= 18; i++) {
           document.write(`<tr>
             <td>${i}</td>
-            <td><input type="number" min="1" id="par_${i}" value="${parValues[i - 1]}" onchange="calculate(${i})"></td>
-            <td><input type="number" min="1" id="a1_${i}" onchange="calculate(${i})"></td>
-            <td><input type="number" min="1" id="a2_${i}" onchange="calculate(${i})"></td>
-            <td id="teamA_${i}">-</td>
-            <td id="birdieA_${i}">-</td>
-            <td><input type="number" min="1" id="b1_${i}" onchange="calculate(${i})"></td>
-            <td><input type="number" min="1" id="b2_${i}" onchange="calculate(${i})"></td>
-            <td id="teamB_${i}">-</td>
-            <td id="birdieB_${i}">-</td>
+            <td><input type="number" min="1" id="your_${i}"></td>
           </tr>`);
         }
       </script>
     </tbody>
-    <tfoot>
-      <tr>
-        <th>Total</th>
-        <td></td>
-        <td colspan="2"></td>
-        <th id="totalA">0</th>
-        <th id="totalBirdiesA">0</th>
-        <td colspan="2"></td>
-        <th id="totalB">0</th>
-        <th id="totalBirdiesB">0</th>
-      </tr>
-    </tfoot>
   </table>
 
+  <button onclick="addMatch()">Add New Match</button>
+  <div id="matches"></div>
+
   <script>
-    function calculate(hole) {
-      const a1 = parseInt(document.getElementById(`a1_${hole}`).value) || 0;
-      const a2 = parseInt(document.getElementById(`a2_${hole}`).value) || 0;
-      const b1 = parseInt(document.getElementById(`b1_${hole}`).value) || 0;
-      const b2 = parseInt(document.getElementById(`b2_${hole}`).value) || 0;
-      const par = parseInt(document.getElementById(`par_${hole}`).value) || 0;
+    let matchCount = 0;
 
-      const bestA = Math.min(a1 || Infinity, a2 || Infinity);
-      const bestB = Math.min(b1 || Infinity, b2 || Infinity);
+    function addMatch() {
+      matchCount++;
+      const matchId = `match_${matchCount}`;
+      const container = document.createElement('div');
+      container.className = 'match-container';
+      container.innerHTML = `
+        <h3>Match ${matchCount}</h3>
+        <div class="player-labels">
+          <div><label>Partner: <input id="${matchId}_partner" placeholder="Partner"></label></div>
+          <div><label>Opponent 1: <input id="${matchId}_opp1" placeholder="Opponent 1"></label></div>
+          <div><label>Opponent 2: <input id="${matchId}_opp2" placeholder="Opponent 2"></label></div>
+        </div>
+        <table>
+          <thead>
+            <tr><th>Hole</th><th>Par</th><th>Your</th><th>Partner</th><th>Team</th><th>Birdie</th><th>Opp1</th><th>Opp2</th><th>Opp Team</th><th>Birdie</th></tr>
+          </thead>
+          <tbody>
+            ${[...Array(18)].map((_, i) => `
+              <tr>
+                <td>${i+1}</td>
+                <td>${parValues[i]}</td>
+                <td id="${matchId}_your_${i+1}">-</td>
+                <td><input type="number" min="1" id="${matchId}_partner_${i+1}" onchange="calcMatch('${matchId}', ${i+1})"></td>
+                <td id="${matchId}_team_${i+1}">-</td>
+                <td id="${matchId}_birdieA_${i+1}">-</td>
+                <td><input type="number" min="1" id="${matchId}_opp1_${i+1}" onchange="calcMatch('${matchId}', ${i+1})"></td>
+                <td><input type="number" min="1" id="${matchId}_opp2_${i+1}" onchange="calcMatch('${matchId}', ${i+1})"></td>
+                <td id="${matchId}_oppTeam_${i+1}">-</td>
+                <td id="${matchId}_birdieB_${i+1}">-</td>
+              </tr>`).join('')}
+          </tbody>
+          <tfoot>
+            <tr>
+              <th>Total</th><td></td><td></td><td></td>
+              <th id="${matchId}_totalA">0</th><th id="${matchId}_birdiesA">0</th>
+              <td></td><td></td>
+              <th id="${matchId}_totalB">0</th><th id="${matchId}_birdiesB">0</th>
+            </tr>
+          </tfoot>
+        </table>
+      `;
+      document.getElementById('matches').appendChild(container);
+    }
 
-      document.getElementById(`teamA_${hole}`).innerText = bestA < Infinity ? bestA : '-';
-      document.getElementById(`teamB_${hole}`).innerText = bestB < Infinity ? bestB : '-';
+    function calcMatch(id, hole) {
+      const par = parValues[hole - 1];
+      const your = parseInt(document.getElementById(`your_${hole}`).value) || Infinity;
+      const partner = parseInt(document.getElementById(`${id}_partner_${hole}`).value) || Infinity;
+      const opp1 = parseInt(document.getElementById(`${id}_opp1_${hole}`).value) || Infinity;
+      const opp2 = parseInt(document.getElementById(`${id}_opp2_${hole}`).value) || Infinity;
 
-      document.getElementById(`birdieA_${hole}`).innerText = (par > 0 && bestA < par) ? '✔️' : '-';
-      document.getElementById(`birdieB_${hole}`).innerText = (par > 0 && bestB < par) ? '✔️' : '-';
+      document.getElementById(`${id}_your_${hole}`).innerText = your < Infinity ? your : '-';
 
-      let totalA = 0;
-      let totalB = 0;
-      let birdiesA = 0;
-      let birdiesB = 0;
+      const team = Math.min(your, partner);
+      const oppTeam = Math.min(opp1, opp2);
 
+      document.getElementById(`${id}_team_${hole}`).innerText = team < Infinity ? team : '-';
+      document.getElementById(`${id}_oppTeam_${hole}`).innerText = oppTeam < Infinity ? oppTeam : '-';
+
+      document.getElementById(`${id}_birdieA_${hole}`).innerText = team < par ? '✔️' : '-';
+      document.getElementById(`${id}_birdieB_${hole}`).innerText = oppTeam < par ? '✔️' : '-';
+
+      let totalA = 0, totalB = 0, birdiesA = 0, birdiesB = 0;
       for (let i = 1; i <= 18; i++) {
-        const valA = parseInt(document.getElementById(`teamA_${i}`).innerText);
-        const valB = parseInt(document.getElementById(`teamB_${i}`).innerText);
-        const parHole = parseInt(document.getElementById(`par_${i}`).value);
-
-        if (!isNaN(valA)) totalA += valA;
-        if (!isNaN(valB)) totalB += valB;
-
-        if (!isNaN(parHole) && valA < parHole) birdiesA++;
-        if (!isNaN(parHole) && valB < parHole) birdiesB++;
+        const a = parseInt(document.getElementById(`${id}_team_${i}`).innerText);
+        const b = parseInt(document.getElementById(`${id}_oppTeam_${i}`).innerText);
+        if (!isNaN(a)) {
+          totalA += a;
+          if (a < parValues[i - 1]) birdiesA++;
+        }
+        if (!isNaN(b)) {
+          totalB += b;
+          if (b < parValues[i - 1]) birdiesB++;
+        }
       }
-
-      document.getElementById("totalA").innerText = totalA;
-      document.getElementById("totalB").innerText = totalB;
-      document.getElementById("totalBirdiesA").innerText = birdiesA;
-      document.getElementById("totalBirdiesB").innerText = birdiesB;
+      document.getElementById(`${id}_totalA`).innerText = totalA;
+      document.getElementById(`${id}_birdiesA`).innerText = birdiesA;
+      document.getElementById(`${id}_totalB`).innerText = totalB;
+      document.getElementById(`${id}_birdiesB`).innerText = birdiesB;
     }
 
     if ('serviceWorker' in navigator) {
